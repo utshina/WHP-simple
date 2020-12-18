@@ -71,7 +71,7 @@ struct kernel {
 } *kernel;
 
 const UINT8 user_code[] = {
-	0x0f,0x01, 0xc1, // vmcall
+	0x0f, 0x01, 0xc1, // vmcall
 };
 
 
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
 	regname[Ss] =   WHvX64RegisterSs;
 	regname[Ds] =   WHvX64RegisterDs;
 	regname[Es] =   WHvX64RegisterEs;
-	regname[Rip] =   WHvX64RegisterRip;
+	regname[Rip] =  WHvX64RegisterRip;
 	WHV_REGISTER_VALUE regvalue[RegNum];
 	regvalue[Cr0].Reg64 = (CR0_PE | CR0_PG);
 	regvalue[Cr3].Reg64 = kernel_start + offsetof(struct kernel, pml4);
