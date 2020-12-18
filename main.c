@@ -70,8 +70,9 @@ struct kernel {
 	UINT64 pdpt[512];
 } *kernel;
 
-const UINT8 user_code[] = {
-	0x0f, 0x01, 0xc1, // vmcall
+const UINT8 user_code[][3] = {
+	{ 0x0f, 0x01, 0xd9 }, // vmmcall for AMD
+	{ 0x0f, 0x01, 0xc1 }, // vmcall for Intel
 };
 
 
@@ -80,6 +81,7 @@ main(int argc, char *argv[])
 {
 	WHV_PARTITION_HANDLE handle;
 	UINT16 vcpu = 0;
+	int vendor;
 
 	// Is Windows Hypervisor Platform (WHP) enabled?
 	UINT32 size;
@@ -89,6 +91,14 @@ main(int argc, char *argv[])
 		&capability, sizeof(capability), &size);
 	if (!capability.HypervisorPresent)
 		panic("Windows Hypervisor Platform is not enabled");
+
+	// Check the processor vendor
+	WHvGetCapability(
+		WHvCapabilityCodeProcessorVendor,
+		&capability, sizeof(capability), &size);
+	vendor = capability.ProcessorVendor;
+	if (vendor > 1)
+		panic("Unsupported vendor");
 
 	// create a VM
 	WHvCreatePartition(&handle)
@@ -131,7 +141,7 @@ main(int argc, char *argv[])
 	void *user_page = aligned_alloc(4 KiB, 4 KiB);
 	if (!user_page)
 		panic("aligned_alloc");
-	memcpy(user_page, user_code, sizeof(user_code));
+	memcpy(user_page, user_code[vendor], sizeof(user_code[vendor]));
 	WHvMapGpaRange(handle, user_page, user_start, 4 KiB,
 		       WHvMapGpaRangeFlagRead | WHvMapGpaRangeFlagExecute)
 		OR panic("map the user region");
